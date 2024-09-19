@@ -5,6 +5,7 @@ import { db } from "./lib/db";
 import { getUserById } from "./data/user";
 import { UserRole } from "@prisma/client";
 import { ExtendedUser } from "./next-auth";
+import { getTwoFactorConfirmationByUserId } from "./data/two-factor-confirmation";
 
 export const {
   handlers: { GET, POST },
@@ -32,6 +33,18 @@ export const {
       const existingUser = await getUserById(user.id!);
       //prevent login if email is not verified
       if (!existingUser?.emailVerified) return false;
+
+      if (existingUser?.isTwoFactorEnabled) {
+        const twoFactorConfirmation = await getTwoFactorConfirmationByUserId(
+          existingUser.id
+        );
+        console.log({ twoFactorConfirmation });
+        if (!twoFactorConfirmation) return false;
+
+        await db.twoFactorConfirmation.delete({
+          where: { id: twoFactorConfirmation.id },
+        });
+      }
 
       return true;
     },

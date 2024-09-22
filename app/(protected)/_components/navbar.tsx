@@ -8,7 +8,7 @@ import { UserButton } from "@/components/user-button";
 export const Navbar = () => {
   const pathname = usePathname();
   return (
-    <div className="w-[600px] bg-secondary flex justify-between items-center p-4 shadow-sm rounded-xl">
+    <div className="w-[600px] bg-secondary flex justify-between items-center p-4 shadow-sm rounded-xl mt-6">
       <div className="flex gap-x-2">
         <Button asChild variant={pathname === "/admin" ? "default" : "outline"}>
           <Link href="/admin">Admin</Link>

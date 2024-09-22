@@ -1,8 +1,10 @@
 "use server";
 
-import { getUserById } from "@/data/user";
+import { getUserByEmail, getUserById } from "@/data/user";
 import { currentUser } from "@/lib/auth";
 import { db } from "@/lib/db";
+import { sendVerificationEmail } from "@/lib/mail";
+import { generateVerificationToken } from "@/lib/tokens";
 import { SettingsSchema } from "@/schemas";
 import * as z from "zod";
 
@@ -19,6 +21,33 @@ export const settings = async (values: z.infer<typeof SettingsSchema>) => {
   if (!dbUser) {
     return {
       error: "User not found",
+    };
+  }
+
+  if (user.isOAuth) {
+    values.email = undefined;
+    values.password = undefined;
+    values.newPassword = undefined;
+    values.isTwoFactorEnabled = undefined;
+  }
+
+  if (values.email && values.email !== user.email) {
+    const existingUser = await getUserByEmail(values.email);
+    if (existingUser) {
+      return {
+        error: "Email already in use",
+      };
+    }
+
+    const verificationToken = await generateVerificationToken(values.email);
+
+    await sendVerificationEmail(
+      verificationToken.email,
+      verificationToken.token
+    );
+
+    return {
+      success: "Email verification sent",
     };
   }
 
